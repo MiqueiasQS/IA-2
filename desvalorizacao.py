@@ -5,7 +5,6 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
-from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib.ticker import FuncFormatter
