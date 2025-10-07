@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 # Importa a função de previsão de desvalorização do outro arquivo
-from desvalorizacao import prever_valor_futuro_ml
+from desvalorizacao import prever_valor_futuro_ml, gerar_imagem_desvalorizacao
 
 # --- 1. CONFIGURAÇÕES E PREMISSAS DO MODELO ---
 
@@ -115,12 +115,18 @@ def main():
 
         # Pega o código FIPE do carro recomendado e chama o modelo de desvalorização
         codigo_fipe_rec = melhor_opcao['CodigoFipe']
-        desvalorizacao_3_anos = prever_valor_futuro_ml(codigo_fipe_rec, 3, verbose=False)
+        # Chama a previsão com verbose=True para imprimir os detalhes
+        dados_desvalorizacao = prever_valor_futuro_ml(codigo_fipe_rec, 3, verbose=True)
 
-        if desvalorizacao_3_anos is not None:
+        if dados_desvalorizacao:
+            # Gera a imagem da análise
+            nome_arquivo_imagem = f"images/analise_{melhor_opcao['ModeloBase'].replace(' ', '_')}_{codigo_fipe_rec}.png"
+            gerar_imagem_desvalorizacao(dados_desvalorizacao, nome_arquivo_imagem)
+
+            desvalorizacao_3_anos = dados_desvalorizacao['desvalorizacao_total']
             economia_liquida_3_anos = economia_bruta_3_anos - desvalorizacao_3_anos
-            print(f"Economia Bruta (Combustível + IPVA) em 3 anos: R$ {economia_bruta_3_anos:,.2f}")
-            print(f"Desvalorização Estimada do Veículo em 3 anos: R$ -{desvalorizacao_3_anos:,.2f}")
+            print(f"\nEconomia Bruta (Combustível + IPVA) em 3 anos: R$ {economia_bruta_3_anos:,.2f}")
+            print(f"Desvalorização Total Estimada do Veículo em 3 anos: R$ -{desvalorizacao_3_anos:,.2f}")
             print("--------------------------------------------------")
             print(f">> BALANÇO FINANCEIRO LÍQUIDO EM 3 ANOS: R$ {economia_liquida_3_anos:,.2f} <<")
             print("--------------------------------------------------")
