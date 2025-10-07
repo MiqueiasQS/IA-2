@@ -2,6 +2,9 @@ import json
 import pandas as pd
 import numpy as np
 
+# Importa a função de previsão de desvalorização do outro arquivo
+from desvalorizacao import prever_valor_futuro_ml
+
 # --- 1. CONFIGURAÇÕES E PREMISSAS DO MODELO ---
 
 # Perfil do carro atual (para cálculo de economia) - ajuste para o seu carro
@@ -102,10 +105,30 @@ def main():
         print(f"Custo Anual com o {melhor_opcao['ModeloBase']}: R$ {PERFIL_USUARIO['km_rodados_anual'] * melhor_opcao['CustoMedioPorKM_R$']:,.2f}")
         print("--------------------------------------------------")
         print(f">> ECONOMIA DE COMBUSTIVEL ANUAL ESTIMADA: R$ {melhor_opcao['EconomiaAnualEstimada_R$']:,.2f} <<")
-        print(f">> ECONOMIA COM IMPOSTOS ANUAL ESTIMADA: R$ {melhor_opcao['Valor'] * 0.03:,.2f} <<")
-        print("--------------------------------------------------")
-        print(f">> ECONOMIA ESTIMADA TOTAL EM 3 ANOS: R$ {(melhor_opcao['EconomiaAnualEstimada_R$'] + (melhor_opcao['Valor'] * 0.03)) * 3:,.2f} <<")
-        print("--------------------------------------------------")
+        print(f">> ECONOMIA COM IMPOSTOS (IPVA) ANUAL ESTIMADA: R$ {melhor_opcao['Valor'] * 0.03:,.2f} <<")
+
+        # --- CÁLCULO DA DESVALORIZAÇÃO E ECONOMIA LÍQUIDA ---
+        print("\n--- ANÁLISE DE VALOR EM 3 ANOS (VISÃO REALISTA) ---")
+        
+        # Calcula a economia bruta em 3 anos (combustível + impostos)
+        economia_bruta_3_anos = (melhor_opcao['EconomiaAnualEstimada_R$'] + (melhor_opcao['Valor'] * 0.03)) * 3
+
+        # Pega o código FIPE do carro recomendado e chama o modelo de desvalorização
+        codigo_fipe_rec = melhor_opcao['CodigoFipe']
+        desvalorizacao_3_anos = prever_valor_futuro_ml(codigo_fipe_rec, 3, verbose=False)
+
+        if desvalorizacao_3_anos is not None:
+            economia_liquida_3_anos = economia_bruta_3_anos - desvalorizacao_3_anos
+            print(f"Economia Bruta (Combustível + IPVA) em 3 anos: R$ {economia_bruta_3_anos:,.2f}")
+            print(f"Desvalorização Estimada do Veículo em 3 anos: R$ -{desvalorizacao_3_anos:,.2f}")
+            print("--------------------------------------------------")
+            print(f">> BALANÇO FINANCEIRO LÍQUIDO EM 3 ANOS: R$ {economia_liquida_3_anos:,.2f} <<")
+            print("--------------------------------------------------")
+        else:
+            print("Não foi possível calcular a desvalorização (dados insuficientes para o modelo).")
+            print("--------------------------------------------------")
+            print(f">> ECONOMIA BRUTA EM 3 ANOS (sem desvalorização): R$ {economia_bruta_3_anos:,.2f} <<")
+            print("--------------------------------------------------")
 
 if __name__ == '__main__':
     main()
